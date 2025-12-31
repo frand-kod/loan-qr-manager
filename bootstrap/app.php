@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
             SubstituteBindings::class,
 
         ]);
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
 
         $middleware->validateCsrfTokens(except: [
             'api/webhook/tripay',
