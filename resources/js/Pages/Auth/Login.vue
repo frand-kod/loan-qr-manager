@@ -1,5 +1,6 @@
 <script setup>
 import { useForm } from "@inertiajs/vue3";
+import logo from "../../../assets/images/logos/piutangku-logo.svg";
 
 const form = useForm({
     email: "",
@@ -7,7 +8,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    // Sementara kita kosongkan dulu logikanya
+    // Sementara kita kosongkan logikanya
     alert("Tombol masuk ditekan!");
 };
 </script>
@@ -19,7 +20,11 @@ const submit = () => {
         >
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-medium text-gray-700">PIUTANGKU</h1>
-                <h2>!! logo gambar !!</h2>
+                <img
+                    :src="logo"
+                    alt="Logo Pituangku"
+                    class="w-20 h-20 mx-auto my-4"
+                />
                 <p class="text-gray-500 text-sm">Silakan masuk ke akun Anda</p>
             </div>
 
