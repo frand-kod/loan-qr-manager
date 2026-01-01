@@ -15,7 +15,12 @@ class CustomerService
 
     public function getAllByUser($userId)
     {
-        return Customer::where('user_id', $userId)->latest()->paginate(10);
+        return Customer::where('user_id', $userId)
+            ->with(['debts' => function($query) {
+                $query->select('id', 'customer_id', 'amount', 'status');
+            }])
+            ->latest()
+            ->paginate(10);
     }
 
     public function createCustomer(array $data)
@@ -23,7 +28,7 @@ class CustomerService
         $customer = Customer::create([
             'user_id' => auth()->id(),
             'name' => $data['name'],
-            'whatsapp_number' => $data['whatsapp_number'],
+            'whatsapp_number' => $data['whatsapp_number'] ?? null,
             'customer_flag' => $data['customer_flag'] ?? 'aman',
         ]);
 

@@ -38,4 +38,47 @@ class DebtController extends Controller
             'data' => $debt,
         ], 201);
     }
+
+    public function show($id)
+    {
+        $debt = $this->debtService->getDebtById($id, auth()->id());
+
+        if (!$debt) {
+            return response()->json(['message' => 'Debt not found'], 404);
+        }
+
+        return response()->json($debt);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'amount' => 'required|numeric|min:1000',
+            'due_date' => 'required|date',
+            'status' => 'sometimes|in:pending,paid,overdue',
+        ]);
+
+        $debt = $this->debtService->updateDebt($id, $validated, auth()->id());
+
+        if (!$debt) {
+            return response()->json(['message' => 'Debt not found'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Debt updated successfully',
+            'data' => $debt,
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $result = $this->debtService->deleteDebt($id, auth()->id());
+
+        if (!$result) {
+            return response()->json(['message' => 'Debt not found'], 404);
+        }
+
+        return response()->json(['message' => 'Debt deleted successfully']);
+    }
 }

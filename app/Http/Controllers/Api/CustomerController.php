@@ -31,7 +31,7 @@ class CustomerController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'whatsapp_number' => 'required|string|unique:customers,whatsapp_number',
+            'whatsapp_number' => 'nullable|string|unique:customers,whatsapp_number',
             'customer_flag' => 'nullable|string|in:aman,waspada,blacklisted',
         ]);
 
@@ -54,7 +54,7 @@ class CustomerController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => 'false',
-                'message' => 'Customer '.$customer->name.' berhasil di tambahkan',
+                'message' => 'Customer gagal ditambahkan: ' . $e->getMessage(),
             ], 500);
         }
     }
