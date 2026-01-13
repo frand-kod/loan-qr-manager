@@ -1,54 +1,99 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Web;
 
 use App\Models\Debt;
-use Illuminate\Support\Str;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DebtService
 {
-    protected $logService;
-
-    // Inject LogService ke dalam DebtService
-    public function __construct(LogService $logService)
+    /**
+     * Mengambil daftar hutang dengan relasi customer & pencarian
+     */
+    public function getDebts($perPage = 10, $search = null)
     {
-        $this->logService = $logService;
+        return Debt::with('customer')
+            ->where('user_id', auth()->id())
+            ->when($search, function ($query, $search) {
+                $query->where('reference_id', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->orderBy('due_date', 'asc')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
+    /**
+     * Generate ID Referensi Unik: DBT-YYYYMMDD-0001
+     */
+    public function generateReferenceId()
+    {
+        $date = Carbon::now()->format('Ymd');
+        $prefix = 'DBT-'.$date.'-';
+
+        $lastDebt = Debt::where('reference_id', 'LIKE', $prefix.'%')
+            ->orderBy('reference_id', 'desc')
+            ->first();
+
+        if (! $lastDebt) {
+            $number = '0001';
+        } else {
+            $lastNumber = substr($lastDebt->reference_id, -4);
+            $number = str_pad((int) $lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        }
+
+        return $prefix.$number;
+    }
+
+    /**
+     * Simpan Hutang Baru
+     */
     public function createDebt(array $data)
     {
-        $debt = Debt::create([
-            'customer_id' => $data['customer_id'],
-            'amount' => $data['amount'],
-            'due_date' => $data['due_date'],
-            'reference_id' => 'INV-'.Str::upper(Str::random(10)),
-            'status' => 'pending',
-        ]);
-        // panggil record
-        $this->logService->record(
-            'Buat utang baru Rp '.number_format($data['amount']),
-            'Debt',
-            $debt->id
-        );
+        return DB::transaction(function () use ($data) {
+            $data['reference_id'] = $this->generateReferenceId();
+            $data['user_id'] = auth()->id();
+            $data['remaining_amount'] = $data['amount']; // Awalnya sisa = total
+            $data['status'] = 'pending';
 
-        return $debt;
+            return Debt::create($data);
+        });
     }
 
-    public function getAllDebts($userId)
+    /**
+     * Update Status Hutang Otomatis (Gunakan ini saat ada cicilan masuk)
+     */
+    public function updateDebtBalance(Debt $debt, $paymentAmount)
     {
-        return Debt::whereHas('customer', function ($q) use ($userId) {
-            $q->where('user_id', $userId);
-        })->with('customer')->latest()->paginate(10);
+        return DB::transaction(function () use ($debt, $paymentAmount) {
+            $newRemaining = $debt->remaining_amount - $paymentAmount;
+
+            $status = 'partial';
+            if ($newRemaining <= 0) {
+                $status = 'paid';
+                $newRemaining = 0;
+            }
+
+            $debt->update([
+                'remaining_amount' => $newRemaining,
+                'status' => $status,
+            ]);
+
+            return $debt;
+        });
     }
 
-    public function getDebtStats($userId)
+    /**
+     * Cek Hutang Jatuh Tempo (Expired)
+     */
+    public function markExpiredDebts()
     {
-        $query = Debt::whereHas('customer', fn ($q) => $q->where('user_id', $userId));
-
-        return [
-            'total_pending' => (int) $query->clone()->where('status', 'pending')->sum('amount'),
-            'count_pending' => $query->clone()->where('status', 'pending')->count(),
-            'total_paid' => (int) $query->clone()->where('status', 'paid')->sum('amount'),
-        ];
+        return Debt::where('user_id', auth()->id())
+            ->where('status', '!=', 'paid')
+            ->where('due_date', '<', now())
+            ->update(['status' => 'expired']);
     }
 }

@@ -19,13 +19,15 @@ class WhatsappService
         $url = config('services.whatsapp.url');
         $secret = config('services.whatsapp.secret');
 
-        $response = Http::get($url, [
+        $response = Http::withOptions([
+            'verify' => false, // Mematikan pengecekan SSL
+        ])->get($url, [
             'to' => $to,
             'msg' => $message,
             'secret' => $secret,
         ]);
 
-        if ($response->successful()) {
+        if ($response->successfull()) {
             $this->logService->record(
                 "Pesann ke $to: ".substr($message, 0, 50).'...',
                 'Debt',

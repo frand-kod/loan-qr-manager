@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'api/webhook/tripay',
+            'webhook/tripay',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

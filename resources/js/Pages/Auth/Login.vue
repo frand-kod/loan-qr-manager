@@ -1,41 +1,29 @@
-<script setup>
-import { useForm } from "@inertiajs/vue3";
-
-const form = useForm({
-    email: "",
-    password: "",
-});
-
-const submit = () => {
-    // Sementara kita kosongkan dulu logikanya
-    alert("Tombol masuk ditekan!");
-};
-</script>
-
 <template>
-    <div class="min-h-screen flex items-center justify-center">
-        <div
-            class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100"
-        >
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-medium text-gray-700">PIUTANGKU</h1>
-                <h2>!! logo gambar !!</h2>
-                <p class="text-gray-500 text-sm">Silakan masuk ke akun Anda</p>
-            </div>
-
-            <form @submit.prevent="submit">
-                <div class="mb-5">
+    <div class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96">
+            <h2
+                class="text-2xl font-bold mb-6 text-center text-blue-900 italic"
+            >
+                PIUTANGKU
+            </h2>
+            <form @submit.prevent="form.post('/login')">
+                <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1"
                         >Email</label
                     >
                     <input
                         v-model="form.email"
                         type="email"
-                        placeholder="nama@email.com"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        :class="{ ' -red-500': form.errors.email }"
                     />
+                    <div
+                        v-if="form.errors.email"
+                        class="text-red-500 text-xs mt-1"
+                    >
+                        {{ form.errors.email }}
+                    </div>
                 </div>
-
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-1"
                         >Password</label
@@ -43,18 +31,30 @@ const submit = () => {
                     <input
                         v-model="form.password"
                         type="password"
-                        placeholder="••••••••"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                     />
                 </div>
-
                 <button
                     type="submit"
-                    class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg hover:bg-blue-700 transition duration-200"
+                    :disabled="form.processing"
+                    class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
                 >
-                    Masuk Sekarang
+                    Login
                 </button>
             </form>
+            <p class="mt-4 text-center text-sm text-gray-600">
+                Belum punya akun?
+                <Link href="/register" class="text-blue-600">Daftar</Link>
+            </p>
         </div>
     </div>
 </template>
+
+<script setup>
+import { useForm, Link } from "@inertiajs/vue3";
+
+const form = useForm({
+    email: "",
+    password: "",
+});
+</script>

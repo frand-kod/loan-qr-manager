@@ -6,27 +6,44 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('debts', function (Blueprint $table) {
             $table->id();
-            // Kolom ini WAJIB ada agar relasi ke Customer jalan
-            $table->foreignId('customer_id')->constrained()->onDelete('cascade');
+
+            // Relasi ke user (pemilik data)
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            // Relasi ke customer
+            $table->foreignId('customer_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            // Total hutang
             $table->decimal('amount', 15, 2);
+
+            // Sisa hutang
+            $table->decimal('remaining_amount', 15, 2);
+
             $table->date('due_date');
+            $table->string('description')->nullable();
+
+            // Referensi unik (invoice / kode hutang)
             $table->string('reference_id')->unique();
-            $table->enum('status', ['pending', 'partial', 'paid', 'expired'])->default('pending');
+
+            $table->enum('status', ['pending', 'partial', 'paid', 'expired'])
+                ->default('pending');
+
+            // WhatsApp reminder
             $table->timestamp('last_reminder_sent')->nullable();
+            $table->unsignedInteger('reminder_count')->default(0);
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('debts');

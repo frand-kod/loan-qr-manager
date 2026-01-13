@@ -11,12 +11,16 @@ class Debt extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'customer_id',
         'amount',
+        'remaining_amount',
         'due_date',
+        'description',
         'reference_id',
         'status',
         'last_reminder_sent',
+        'reminder_count',
     ];
 
     public function customer()

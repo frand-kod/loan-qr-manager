@@ -38,7 +38,9 @@ class PaymentService
             'signature' => hash_hmac('sha256', config('services.tripay.merchant_code').$debt->reference_id.$debt->amount, config('services.tripay.private_key')),
         ];
 
-        $response = Http::withToken(config('services.tripay.api_key'))->post($url, $payload);
+        $response = Http::withToken(config('services.tripay.api_key'))
+            ->withoutVerifying()
+            ->post($url, $payload);
 
         // If a Guzzle promise was returned (e.g., async), wait and decode; otherwise use Laravel response json()
         if ($response instanceof \GuzzleHttp\Promise\PromiseInterface) {
@@ -53,6 +55,8 @@ class PaymentService
 
     public function handleWebhook(object $data)
     {
+        // Catat data yang masuk ke storage/logs/laravel.log
+        \Log::info('Tripay Callback Masuk:', $data->all());
         // Mencari hutang berdasarkan reference_id yang dikirim Tripay
         $debt = Debt::where('reference_id', $data->merchant_ref)->first();
 

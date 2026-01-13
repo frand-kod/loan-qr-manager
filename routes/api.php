@@ -16,7 +16,7 @@ Route::get('/ping', function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 // webhook
-Route::post('/webhook/tripay', [WebhookController::class, 'handleTripay']);
+// Route::post('/webhook/tripay', [WebhookController::class, 'handleTripay']);
 
 // Protected route with auth
 Route::middleware('auth:sanctum')->group(function () {
