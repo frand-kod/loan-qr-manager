@@ -27,7 +27,7 @@ class WhatsappService
             'secret' => $secret,
         ]);
 
-        if ($response->successfull()) {
+        if ($response) {
             $this->logService->record(
                 "Pesann ke $to: ".substr($message, 0, 50).'...',
                 'Debt',

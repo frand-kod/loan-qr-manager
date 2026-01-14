@@ -60,11 +60,17 @@ class DebtService
         $amount = number_format($debt->remaining_amount, 0, ',', '.');
         $dueDate = Carbon::parse($debt->due_date)->translatedFormat('d F Y');
 
+        $paymentUrl = route('public.debt.pay', [
+            'reference' => $debt->reference_id,
+            'hash' => md5($debt->id.config('app.key')), // Keamanan dasar agar link tidak ditebak
+        ]);
         // Template Pesan
         $message = "Halo *{$debt->customer->name}*,\n\n";
         $message .= "Kami menginformasikan mengenai tagihan Anda dengan referensi *{$debt->reference_id}*.\n";
         $message .= "Sisa tagihan: *Rp {$amount}*\n";
         $message .= "Jatuh tempo: *{$dueDate}*\n\n";
+        $message .= "Anda dapat melihat detail dan melakukan pembayaran melalui link resmi berikut:\n";
+        $message .= $paymentUrl."\n\n";
         $message .= 'Mohon segera melakukan pembayaran. Jika sudah membayar, abaikan pesan ini. Terima kasih.';
 
         $status = $waService->sendMessage($debt->customer->whatsapp_number, $message, $debt->id);

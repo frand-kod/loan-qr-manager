@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Debt;
+use App\Services\PaymentService;
 use App\Services\Web\DebtService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,9 +14,13 @@ class DebtController extends Controller
 {
     protected $debtService;
 
-    public function __construct(DebtService $debtService)
+    protected $paymentService;
+
+    // 3. Masukkan kedua Service ke dalam constructor
+    public function __construct(DebtService $debtService, PaymentService $paymentService)
     {
         $this->debtService = $debtService;
+        $this->paymentService = $paymentService;
     }
 
     /**
@@ -55,7 +61,7 @@ class DebtController extends Controller
      */
     public function destroy($id)
     {
-        $debt = \App\Models\Debt::where('user_id', auth()->id())->findOrFail($id);
+        $debt = Debt::where('user_id', auth()->id())->findOrFail($id);
         $debt->delete();
 
         return redirect()->back()->with('success', 'Data hutang berhasil dihapus.');
@@ -66,7 +72,7 @@ class DebtController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $debt = \App\Models\Debt::where('user_id', auth()->id())->findOrFail($id);
+        $debt = Debt::where('user_id', auth()->id())->findOrFail($id);
 
         $request->validate([
             'status' => 'required|in:pending,partial,paid,expired',
@@ -79,7 +85,7 @@ class DebtController extends Controller
 
     public function update(Request $request, $id)
     {
-        $debt = \App\Models\Debt::where('user_id', auth()->id())->findOrFail($id);
+        $debt = Debt::where('user_id', auth()->id())->findOrFail($id);
 
         $validated = $request->validate([
             'amount' => 'required|numeric|min:500',
@@ -119,5 +125,18 @@ class DebtController extends Controller
         }
 
         return back()->with('error', 'Koneksi API WhatsApp gagal.');
+    }
+
+    public function markAsPaid(Debt $debt)
+    {
+        // Pastikan milik user yang login
+        if ($debt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Proses pelunasan melalui Service
+        $this->paymentService->handleManualPayment($debt);
+
+        return back()->with('success', 'Hutang telah dilunasi secara manual.');
     }
 }

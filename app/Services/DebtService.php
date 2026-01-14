@@ -3,6 +3,7 @@
 namespace App\Services\Web;
 
 use App\Models\Debt;
+use App\Services\LogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -11,6 +12,13 @@ class DebtService
     /**
      * Mengambil daftar hutang dengan relasi customer & pencarian
      */
+    protected $logService;
+
+    public function __construct(LogService $logService)
+    {
+        $this->logService = $logService;
+    }
+
     public function getDebts($perPage = 10, $search = null)
     {
         return Debt::with('customer')

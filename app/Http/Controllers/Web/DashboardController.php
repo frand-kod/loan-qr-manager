@@ -20,6 +20,7 @@ class DashboardController extends Controller
     {
 
         $stats = $this->dashboardService->getStats();
+        \Log::info('Dashboard Stats Debug:', $stats);
 
         return Inertia::render('Dashboard', [
             'stats' => $stats]);
